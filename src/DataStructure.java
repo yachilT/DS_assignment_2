@@ -1,3 +1,4 @@
+import javax.crypto.Cipher;
 import java.util.Comparator;
 
 public class DataStructure implements DT {
@@ -20,13 +21,20 @@ public class DataStructure implements DT {
 	@Override
 	public void addPoint(Point point) {
 		if (size == 0) {
-			xFirst = new Link<>(new Container(point, new XComparator()), null, null);
+			xFirst = new Link<>(new Container(point, new XComparator()), null, null, null);
 			xLast = xFirst;
-			yFirst = new Link<>(new Container(point, new YComparator()), null, null);
+			yFirst = new Link<>(new Container(point, new YComparator()), null, null, xFirst);
 			yLast = yFirst;
+
+			xFirst.setOtherAxis(yFirst);
 		} else {
-			add(point, xFirst);
-			add(point, yFirst);
+
+			Link<Container> toAddX = new Link<>(new Container(point, new XComparator()), null, null, null);
+			Link<Container> toAddY = new Link<>(new Container(point, new YComparator()), null, null, toAddX);
+			toAddX.setOtherAxis(toAddY);
+
+			add(toAddX, xFirst);
+			add(toAddY, yFirst);
 
 			if (xFirst.hasPrev())
 				xFirst = xFirst.getPrev();
@@ -43,24 +51,25 @@ public class DataStructure implements DT {
 		size++;
 	}
 
-	private void add(Point point, Link<Container> curr) {
+	private void add(Link<Container> toAdd, Link<Container> curr) {
+		Point point = toAdd.getData().getData();
 		while (curr.hasNext() && curr.getData().compareTo(point) < 0) {
 			curr = curr.getNext();
 		}
 
-		Link<Container> newPX;
 		if (curr.getData().compareTo(point) > 0) {
-
-			newPX = new Link<>(new Container(point, curr.getData().getCmpr()), curr.getPrev(), curr);
+			toAdd.setPrev(curr.getPrev());
+			toAdd.setNext(curr);
 		} else {
-			newPX = new Link<>(new Container(point, curr.getData().getCmpr()), curr, curr.getNext());
+			toAdd.setPrev(curr);
+			toAdd.setNext(curr.getNext());
 		}
 
-		if (newPX.hasNext())
-			newPX.getNext().setPrev(newPX);
+		if (toAdd.hasNext())
+			toAdd.getNext().setPrev(toAdd);
 
-		if (newPX.hasPrev())
-			newPX.getPrev().setNext(newPX);
+		if (toAdd.hasPrev())
+			toAdd.getPrev().setNext(toAdd);
 
 	}
 
@@ -100,20 +109,52 @@ public class DataStructure implements DT {
 
 	@Override
 	public void narrowRange(int min, int max, Boolean axis) {
-		// TODO Auto-generated method stub
+		Link<Container> first = axis ? xFirst : yFirst;
+		Link<Container> last = axis ? xLast : yLast;
+
+		Point minPoint = new Point(min,min);
+		Point maxPoint = new Point(max,max);
+
+		while((first.hasNext() & last.hasPrev())
+				&& first.getData().compareTo(minPoint) < 0 & last.getData().compareTo(maxPoint) > 0){
+			Link<Container> toRemoveFirst = first;
+			Link<Container> toRemoveLast = last;
+
+			first = first.getNext();
+			last = last.getPrev();
+
+			delete(toRemoveFirst);
+			delete(toRemoveLast);
+		}
+
+		while (first.hasNext() && first.getData().compareTo(minPoint) < 0) {
+			Link<Container> toRemoveFirst = first;
+			first = first.getNext();
+			delete(toRemoveFirst);
+		}
+
+		while (last.hasPrev() && last.getData().compareTo(maxPoint) > 0) {
+			Link<Container> toRemoveLast = last;
+			last = last.getPrev();
+			delete(toRemoveLast);
+		}
 
 	}
 
 	@Override
 	public Boolean getLargestAxis() {
-		// TODO Auto-generated method stub
-		return null;
+		return xLast.getData().getData().getX() - xFirst.getData().getData().getX() >
+				yLast.getData().getData().getY() - yFirst.getData().getData().getY();
 	}
 
 	@Override
 	public Container getMedian(Boolean axis) {
-		// TODO Auto-generated method stub
-		return null;
+		Link<Container> curr = axis ? xFirst : yFirst;
+		int index = 0;
+		while (index < this.size){
+			curr = curr.getNext();
+		}
+		return curr.getData();
 	}
 
 	@Override
@@ -128,7 +169,11 @@ public class DataStructure implements DT {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	private void delete(Link<Container> toDelete){
+		toDelete.getOtherAxis().delete();
+		toDelete.delete();
+		this.size--;
+	}
 
 	//TODO: add members, methods, etc.
 
