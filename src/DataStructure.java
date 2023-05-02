@@ -239,7 +239,7 @@ public class DataStructure implements DT {
 		return inStrip;
 	}
 
-	public double dist(Point p1,Point p2){
+	private double dist(Point p1,Point p2){
 		return Math.sqrt(Math.pow(p1.getX() - p2.getX(),2) + Math.pow(p1.getY() - p2.getY(),2));
 	}
 
@@ -251,7 +251,7 @@ public class DataStructure implements DT {
 
 	}
 
-	public double nearestPair(Point[] arr,int left,int right, Point[] nearest){
+	private double nearestPair(Point[] arr,int left,int right, Point[] nearest){
 		Point[] pair = new Point[2];
 		if(right + 1 - left <= 3) {
 			double minDistance = Double.POSITIVE_INFINITY;
